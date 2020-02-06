@@ -234,6 +234,8 @@ class AutoUpdater {
 
     const retryCount = this.config.retryCount();
     const retrySleep = this.config.retrySleep();
+    const mergeConflictAction = this.config.mergeConflictAction();
+    
     let retries = 0;
 
     while (true) {
@@ -242,6 +244,13 @@ class AutoUpdater {
         await doMerge();
         break;
       } catch (e) {
+        if (e.message === "Merge conflict" && mergeConflictAction === "ignore") {
+          return;
+        } else if (e.message === "Merge conflict") {
+          ghCore.error("Merge conflict error trying to update branch");
+          throw e;
+        }
+
         ghCore.error(`Caught error trying to update branch: ${e.message}`);
 
         if (retries < retryCount) {
